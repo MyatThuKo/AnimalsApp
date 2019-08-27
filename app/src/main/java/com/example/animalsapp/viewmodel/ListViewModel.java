@@ -1,43 +1,117 @@
 package com.example.animalsapp.viewmodel;
 
+import android.app.Application;
+import android.widget.Toast;
+
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.ViewModel;
 
+import com.example.animalsapp.model.AnimalApiService;
 import com.example.animalsapp.model.AnimalModel;
+import com.example.animalsapp.model.ApiKeyModel;
+import com.example.animalsapp.util.SharedPreferencesHelper;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ListViewModel extends ViewModel {
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.observers.DisposableSingleObserver;
+import io.reactivex.schedulers.Schedulers;
+
+public class ListViewModel extends AndroidViewModel {
+
+    private AnimalApiService apiService = new AnimalApiService();
+
+    private CompositeDisposable disposable = new CompositeDisposable();
 
     public MutableLiveData<List<AnimalModel>> animals = new MutableLiveData<List<AnimalModel>>();
     public MutableLiveData<Boolean> error = new MutableLiveData<Boolean>();
     public MutableLiveData<Boolean> loading = new MutableLiveData<Boolean>();
 
+    private SharedPreferencesHelper prefs;
+
+    private Boolean invalidApiKey = false;
+
+    public ListViewModel(Application application) {
+        super(application);
+        prefs = new SharedPreferencesHelper(application);
+    }
+
     public void refresh() {
-        AnimalModel animal1 = new AnimalModel("Dog");
-        AnimalModel animal2 = new AnimalModel("Lion");
-        AnimalModel animal3 = new AnimalModel("Rabbit");
-        AnimalModel animal4 = new AnimalModel("Dog");
-        AnimalModel animal5 = new AnimalModel("Lion");
-        AnimalModel animal6 = new AnimalModel("Rabbit");
-        AnimalModel animal7 = new AnimalModel("Dog");
-        AnimalModel animal8 = new AnimalModel("Lion");
-        AnimalModel animal9 = new AnimalModel("Rabbit");
+        loading.setValue(true);
+        invalidApiKey = false;
+        String key = prefs.getApiKey();
+        if (key == null || key.equals("")) {
+            getKey();
+        } else {
+            getAnimals(key);
+        }
+    }
 
-        List<AnimalModel> list = new ArrayList<>();
-        list.add(animal1);
-        list.add(animal2);
-        list.add(animal3);
-        list.add(animal4);
-        list.add(animal5);
-        list.add(animal6);
-        list.add(animal7);
-        list.add(animal8);
-        list.add(animal9);
+    public void hardRefresh() {
+        loading.setValue(true);
+        getKey();
+    }
 
-        animals.setValue(list);
-        error.setValue(false);
-        loading.setValue(false);
+    private void getKey() {
+        disposable.add(
+                apiService.getAPIKey()
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeWith(new DisposableSingleObserver<ApiKeyModel>() {
+                            @Override
+                            public void onSuccess(ApiKeyModel keyModel) {
+                                if (keyModel.key.isEmpty()) {
+                                    error.setValue(true);
+                                    loading.setValue(false);
+                                } else {
+                                    prefs.saveApiKey(keyModel.key);
+                                    getAnimals(keyModel.key);
+                                }
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                if (!invalidApiKey) {
+                                    invalidApiKey = true;
+                                    getKey();
+                                } else {
+                                    e.printStackTrace();
+                                    loading.setValue(false);
+                                    error.setValue(true);
+                                }
+                            }
+                        })
+        );
+    }
+
+    private void getAnimals(String key) {
+        disposable.add(
+                apiService.getAnimals(key)
+                        .subscribeOn(Schedulers.newThread())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribeWith(new DisposableSingleObserver<List<AnimalModel>>() {
+                            @Override
+                            public void onSuccess(List<AnimalModel> list) {
+                                animals.setValue(list);
+                                loading.setValue(false);
+                                error.setValue(false);
+                            }
+
+                            @Override
+                            public void onError(Throwable e) {
+                                loading.setValue(false);
+                                error.setValue(true);
+                                e.printStackTrace();
+                            }
+                        })
+        );
+
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        disposable.clear();
     }
 }
