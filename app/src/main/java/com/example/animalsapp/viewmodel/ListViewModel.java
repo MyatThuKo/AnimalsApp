@@ -1,11 +1,13 @@
 package com.example.animalsapp.viewmodel;
 
 import android.app.Application;
-import android.widget.Toast;
 
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.animalsapp.di.AppModule;
+import com.example.animalsapp.di.DaggerViewModelComponent;
+import com.example.animalsapp.di.TypeOfContext;
 import com.example.animalsapp.model.AnimalApiService;
 import com.example.animalsapp.model.AnimalModel;
 import com.example.animalsapp.model.ApiKeyModel;
@@ -13,14 +15,19 @@ import com.example.animalsapp.util.SharedPreferencesHelper;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
 
+import static com.example.animalsapp.di.TypeOfContext.CONTEXT_APP;
+
 public class ListViewModel extends AndroidViewModel {
 
-    private AnimalApiService apiService = new AnimalApiService();
+    @Inject
+    AnimalApiService apiService;
 
     private CompositeDisposable disposable = new CompositeDisposable();
 
@@ -28,13 +35,18 @@ public class ListViewModel extends AndroidViewModel {
     public MutableLiveData<Boolean> error = new MutableLiveData<Boolean>();
     public MutableLiveData<Boolean> loading = new MutableLiveData<Boolean>();
 
-    private SharedPreferencesHelper prefs;
+    @Inject
+    @TypeOfContext(CONTEXT_APP)
+    SharedPreferencesHelper prefs;
 
     private Boolean invalidApiKey = false;
 
     public ListViewModel(Application application) {
         super(application);
-        prefs = new SharedPreferencesHelper(application);
+        DaggerViewModelComponent.builder()
+                .appModule(new AppModule(getApplication()))
+                .build()
+                .inject(this);
     }
 
     public void refresh() {
