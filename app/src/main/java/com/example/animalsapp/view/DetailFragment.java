@@ -7,47 +7,27 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.palette.graphics.Palette;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.example.animalsapp.R;
+import com.example.animalsapp.databinding.FragmentDetailBinding;
 import com.example.animalsapp.model.AnimalModel;
-import com.example.animalsapp.util.Util;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
+import com.example.animalsapp.model.AnimalPalette;
 
 public class DetailFragment extends Fragment {
 
     private AnimalModel animal;
 
-    @BindView(R.id.animalImage)
-    ImageView animalImage;
-
-    @BindView(R.id.animalName)
-    TextView animalName;
-
-    @BindView(R.id.animalLocation)
-    TextView animalLocation;
-
-    @BindView(R.id.animalLifespan)
-    TextView animalLifeSpan;
-
-    @BindView(R.id.animalDiet)
-    TextView animalDiet;
-
-    @BindView(R.id.animalLinearLayout)
-    LinearLayout animalLayout;
+    FragmentDetailBinding animalDetailBinding;
 
     public DetailFragment() {
 
@@ -56,9 +36,8 @@ public class DetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_detail, container, false);
-        ButterKnife.bind(this, view);
-        return view;
+        animalDetailBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_detail, container, false);
+        return animalDetailBinding.getRoot();
     }
 
     @Override
@@ -70,12 +49,7 @@ public class DetailFragment extends Fragment {
         }
 
         if (animal != null) {
-            animalName.setText(animal.name);
-            animalLocation.setText(animal.location);
-            animalDiet.setText(animal.diet);
-            animalLifeSpan.setText(animal.lifeSpan);
-
-            Util.loadImage(animalImage, animal.imageURL, Util.getProgressDrawable(animalImage.getContext()));
+            animalDetailBinding.setAnimal(animal);
             setUpBackgroundColor(animal.imageURL);
         }
     }
@@ -92,7 +66,8 @@ public class DetailFragment extends Fragment {
                                     Palette.Swatch color = palette.getDominantSwatch();
                                     if (color != null) {
                                         int intColor = color.getRgb();
-                                        animalLayout.setBackgroundColor(intColor);
+                                        AnimalPalette animalPalette = new AnimalPalette(intColor);
+                                        animalDetailBinding.setPalette(animalPalette);
                                     }
                                 });
                     }

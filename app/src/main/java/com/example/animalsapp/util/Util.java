@@ -3,6 +3,7 @@ package com.example.animalsapp.util;
 import android.content.Context;
 import android.widget.ImageView;
 
+import androidx.databinding.BindingAdapter;
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable;
 
 import com.bumptech.glide.Glide;
@@ -27,5 +28,10 @@ public class Util {
         progressDrawable.setStrokeWidth(10f);
         progressDrawable.start();
         return progressDrawable;
+    }
+
+    @BindingAdapter("android:imageURL")
+    public static void loadImge(ImageView view, String url) {
+        loadImage(view, url, Util.getProgressDrawable(view.getContext()));
     }
 }

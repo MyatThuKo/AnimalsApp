@@ -3,23 +3,21 @@ package com.example.animalsapp.view;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.databinding.DataBindingUtil;
 import androidx.navigation.NavDirections;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.animalsapp.R;
+import com.example.animalsapp.databinding.ItemAnimalBinding;
 import com.example.animalsapp.model.AnimalModel;
-import com.example.animalsapp.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AnimalListAdapter extends RecyclerView.Adapter<AnimalListAdapter.AnimalViewHolder> {
+public class AnimalListAdapter extends RecyclerView.Adapter<AnimalListAdapter.AnimalViewHolder> implements AnimalClickListener {
 
     private ArrayList<AnimalModel> animalList = new ArrayList<>();
 
@@ -33,22 +31,14 @@ public class AnimalListAdapter extends RecyclerView.Adapter<AnimalListAdapter.An
     @Override
     public AnimalViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         LayoutInflater inflater = LayoutInflater.from(parent.getContext());
-        View view = inflater.inflate(R.layout.item_animal, parent, false);
+        ItemAnimalBinding view = DataBindingUtil.inflate(inflater, R.layout.item_animal, parent, false);
         return new AnimalViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull AnimalViewHolder holder, int position) {
-        ImageView animalImage = holder.itemView.findViewById(R.id.animalImage);
-        TextView animalName = holder.itemView.findViewById(R.id.animalName);
-        ConstraintLayout layout = holder.itemView.findViewById(R.id.animalLayout);
-
-        animalName.setText(animalList.get(position).name);
-        Util.loadImage(animalImage, animalList.get(position).imageURL, Util.getProgressDrawable(animalImage.getContext()));
-        layout.setOnClickListener(view -> {
-            NavDirections action = ListFragmentDirections.actionGoToDetail(animalList.get(position));
-            Navigation.findNavController(view).navigate(action);
-        });
+        holder.itemView.setAnimal(animalList.get(position));
+        holder.itemView.setListener(this);
     }
 
     @Override
@@ -56,10 +46,23 @@ public class AnimalListAdapter extends RecyclerView.Adapter<AnimalListAdapter.An
         return animalList.size();
     }
 
+    @Override
+    public void onAnimalClicked(View v) {
+        for (AnimalModel animal : animalList) {
+            if (v.getTag().equals(animal.name)) {
+                NavDirections action = ListFragmentDirections.actionGoToDetail(animal);
+                Navigation.findNavController(v).navigate(action);
+            }
+        }
+    }
+
     class AnimalViewHolder extends RecyclerView.ViewHolder {
 
-        public AnimalViewHolder(View itemView) {
-            super(itemView);
+        ItemAnimalBinding itemView;
+
+        public AnimalViewHolder(ItemAnimalBinding view) {
+            super(view.getRoot());
+            itemView = view;
         }
     }
 }
