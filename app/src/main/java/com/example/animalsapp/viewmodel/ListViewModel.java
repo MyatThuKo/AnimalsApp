@@ -40,16 +40,28 @@ public class ListViewModel extends AndroidViewModel {
     SharedPreferencesHelper prefs;
 
     private Boolean invalidApiKey = false;
+    private Boolean injected = false;
 
     public ListViewModel(Application application) {
         super(application);
-        DaggerViewModelComponent.builder()
-                .appModule(new AppModule(getApplication()))
-                .build()
-                .inject(this);
+    }
+
+    public ListViewModel(Application application, Boolean isTest) {
+        super(application);
+        injected = true;
+    }
+
+    private void inject() {
+        if (!injected) {
+            DaggerViewModelComponent.builder()
+                    .appModule(new AppModule(getApplication()))
+                    .build()
+                    .inject(this);
+        }
     }
 
     public void refresh() {
+        inject();
         loading.setValue(true);
         invalidApiKey = false;
         String key = prefs.getApiKey();
