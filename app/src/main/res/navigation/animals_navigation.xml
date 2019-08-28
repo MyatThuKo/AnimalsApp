@@ -23,8 +23,7 @@
             android:id="@+id/actionGoToList"
             app:destination="@id/listFragment" />
         <argument
-            android:name="animal_id"
-            app:argType="integer"
-            android:defaultValue="0" />
+            android:name="animalModel"
+            app:argType="com.example.animalsapp.model.AnimalModel" />
     </fragment>
 </navigation>
